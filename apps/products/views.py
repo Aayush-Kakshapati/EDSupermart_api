@@ -25,15 +25,9 @@ class ProductDetailAPIView(APIView):
 
 
 class ProductCreateAPIView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsOwner]
 
-    def post(self, request):
-        if not IsOwner():
-            return Response(
-                {'error': 'Only owners can create products'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
+    def post(self, request):        
         serializer = ProductSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -42,16 +36,10 @@ class ProductCreateAPIView(APIView):
 
 
 class ProductUpdateAPIView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsOwner]
 
     def patch(self, request, pk):
         product = Product.objects.get(pk=pk)
-        if not IsOwner():
-            return Response(
-                {'error': 'Only owners can create products'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
         serializer = ProductSerializer(product, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -60,16 +48,10 @@ class ProductUpdateAPIView(APIView):
 
 
 class ProductDeleteAPIView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsOwner]
 
     def delete(self, request, pk):
         product = Product.objects.get(pk=pk)
-        
-        if not IsOwner():
-            return Response(
-                {'error': 'Only owners can delete products'},
-                status=status.HTTP_403_FORBIDDEN
-            )
         
         product.delete()
         return Response(
