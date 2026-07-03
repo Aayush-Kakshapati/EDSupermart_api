@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate
 
 from .serializers import UserSerializer, UserSignupSerializer
 
+
 # Create your views here.
 
 class SignupAPIView(APIView):

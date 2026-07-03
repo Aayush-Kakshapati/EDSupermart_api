@@ -52,7 +52,7 @@ class CartItemDeleteAPIView(APIView):
     def delete(self, request, pk):
 
         try:
-            item = CartItem.objects.get(pk = pk, user_cart = request.user)
+            item = CartItem.objects.get(pk = pk, cart__user = request.user)
         except CartItem.DoesNotExist:
             return Response({'Error': 'Product does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
         
