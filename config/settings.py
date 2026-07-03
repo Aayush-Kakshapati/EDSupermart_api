@@ -140,11 +140,6 @@ REST_FRAMEWORK = {
     ),
 }
 
-AUTHENTICATION_BACKENDS = [
-    "apps.accounts.backends.EmailOrUsernameBackend",
-    "django.contrib.auth.backends.ModelBackend",
-]
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=12),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
