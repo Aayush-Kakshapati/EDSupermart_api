@@ -41,10 +41,13 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'corsheaders',
+
+    'drf_spectacular',
     
     'apps.accounts',
     'apps.products',
     'apps.cart',
+    'apps.orders',
 ]
 
 MIDDLEWARE = [
@@ -139,9 +142,28 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=12),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Supermarket API',
+    'DESCRIPTION': 'API documentation for the Supermarket API.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # OTHER SETTINGS
+}
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'kakshaaayush@gmail.com'
+EMAIL_HOST_PASSWORD = 'vgwmmvemlrjyltor'
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False 
+
+CONTACT_PHONE_NUMBER = '+977-98XXXXXXXX' 

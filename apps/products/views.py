@@ -4,6 +4,8 @@ from rest_framework import status, permissions
 from .models import Product
 from .permissions import IsOwner
 from .serializers import ProductSerializer
+from apps.orders.serializers import OrderCreateSerializer, OrderSerializer
+from apps.orders.utils import process_new_order
 
 
 class ProductListAPIView(APIView):
@@ -64,33 +66,37 @@ class ProductBuyAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
-        product = Product.objects.get(pk=pk)
-        
-        if product.stock <= 0:
+        try:
+            quantity = int(request.data.get('quantity', 1))
+        except (TypeError, ValueError):
             return Response(
-                {'error': 'Product is out of stock'},
-                status=status.HTTP_400_BAD_REQUEST
+                {'error': 'Quantity must be a valid integer'},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        
-        quantity = request.data.get('quantity', 1)
-        quantity = int(quantity)
+
         if quantity <= 0:
             return Response(
                 {'error': 'Quantity must be a positive integer'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        
-        if quantity > product.stock:
-            return Response(
-                {'error': f'Only {product.stock} items available'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        product.stock -= quantity
-        product.save()
-        
-        return Response({
-            'message': 'Purchase successful',
-            'product': ProductSerializer(product).data,
-            'quantity_purchased': quantity
-        }, status=status.HTTP_200_OK)
+
+        data = {
+            'email': request.user.email,
+            'items': [{'product_id': pk, 'quantity': quantity}],
+        }
+        serializer = OrderCreateSerializer(data=data)
+        if serializer.is_valid():
+            order = serializer.save(user=request.user)
+            process_new_order(order)
+            response_serializer = OrderSerializer(order)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+        errors = serializer.errors
+        if 'items' in errors:
+            detail = errors['items']
+            if isinstance(detail, list) and detail:
+                message = str(detail[0])
+            else:
+                message = str(detail)
+            return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(errors, status=status.HTTP_400_BAD_REQUEST)

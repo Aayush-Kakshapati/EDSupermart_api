@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions, status
 from apps.products.models import Product
+from django.db.models import F
 
 from .serializers import CartSerializer, CartItemSerializer
 from .models import Cart, CartItem
@@ -11,7 +12,7 @@ class CartAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        cart, create = Cart.objects.get_or_create(user = request.user)
+        cart, _ = Cart.objects.get_or_create(user=request.user)
         serializer = CartSerializer(cart)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
@@ -34,13 +35,16 @@ class CartItemAddAPIView(APIView):
         except Product.DoesNotExist:
             return Response({'Error':' product does not exitst'}, status=status.HTTP_404_NOT_FOUND)
         
-        cart, create = Cart.objects.get_or_create(user = request.user)
+        cart = Cart.objects.filter(user=request.user).first()
+
+        if cart is None:
+            cart = Cart.objects.create(user=request.user)
 
         items, created = CartItem.objects.get_or_create(cart = cart, product = product, defaults={'quantity': quantity})
 
         if not created:
-            items.quantity += quantity
-            items.save()
+            CartItem.objects.filter(pk=items.pk).update(quantity=F('quantity') + quantity)
+            items.refresh_from_db()
 
         serializer = CartItemSerializer(items)
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
