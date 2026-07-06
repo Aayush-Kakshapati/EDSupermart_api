@@ -1,6 +1,7 @@
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.html import strip_tags
+from django.utils import timezone
 
 
 def clear_user_cart(user):
@@ -45,6 +46,10 @@ def process_new_order(order):
 
 
 def send_order_confirmation_email(order):
+
+    local_time = timezone.localtime(order.created_at)
+    formatted_time = local_time.strftime('%B %d, %Y at %I:%M %p')
+
     subject = f'Order Confirmation - Order #{order.id}'
     
     items_html = ""
@@ -53,8 +58,8 @@ def send_order_confirmation_email(order):
         <tr>
             <td>{item.product.name}</td>
             <td>{item.quantity}</td>
-            <td>${item.price}</td>
-            <td>${item.quantity * item.price}</td>
+            <td>Rs. {item.price}</td>
+            <td>Rs. {item.quantity * item.price}</td>
         </tr>
         """
     
@@ -85,7 +90,7 @@ def send_order_confirmation_email(order):
                 <p><strong>Status:</strong> {order.get_status_display()}</p>
                 <p><strong>Email:</strong> {order.email}</p>
                 <p><strong>Address:</strong> {order.user.address if order.user.address else 'Not provided'}</p>
-                <p><strong>Order Date:</strong> {order.created_at.strftime('%B %d, %Y at %I:%M %p')}</p>
+                <p><strong>Order Date:</strong> {formatted_time}</p>
             </div>
             
             <h3>Items Ordered</h3>
@@ -104,7 +109,7 @@ def send_order_confirmation_email(order):
             </table>
             
             <div class="total">
-                <p>Total Amount: ${order.total_amount}</p>
+                <p>Total Amount: Rs.{order.total_amount}</p>
             </div>
             
             <div class="footer">
@@ -131,11 +136,12 @@ Order Date: {order.created_at.strftime('%B %d, %Y at %I:%M %p')}
 Items Ordered:
 """
     
-    for item in order.order_items.all():
-        plain_message += f"- {item.product.name} x {item.quantity} = ${item.quantity * item.price}\n"
+    items = order.order_items.select_related("product").all()
+    for item in items:
+        plain_message += f"- {item.product.name} x {item.quantity} = Rs. {item.quantity * item.price}\n"
     
-    plain_message += f"\nTotal Amount: ${order.total_amount}\n"
-    plain_message += f"\nIf any details are incorrect, please contact us immediately:\n"
+    plain_message += f"\nTotal Amount: Rs. {order.total_amount}\n"
+    plain_message += "\nIf any details are incorrect, please contact us immediately:\n"
     plain_message += f"Phone: {settings.CONTACT_PHONE_NUMBER}\n"
     plain_message += f"Email: {settings.EMAIL_HOST_USER}\n"
     plain_message += "Thank you for your order!"

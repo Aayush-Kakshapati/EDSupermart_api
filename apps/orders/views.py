@@ -7,7 +7,6 @@ from .permissions import IsOwnerOrStaff, IsOwner
 from .utils import process_new_order, clear_user_cart
 from apps.notifications.models import Notification
 
-
 class OrderListAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
