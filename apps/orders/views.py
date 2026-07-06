@@ -5,6 +5,7 @@ from .models import Order, OrderItem
 from .serializers import OrderSerializer, OrderCreateSerializer
 from .permissions import IsOwnerOrStaff, IsOwner
 from .utils import process_new_order, clear_user_cart
+from apps.notifications.models import Notification
 
 
 class OrderListAPIView(APIView):
@@ -105,7 +106,6 @@ class OrderStatusUpdateAPIView(APIView):
             order.status = status_value
             order.save()
             
-            # Create notification for user when order is shipped
             if old_status != 'shipped' and status_value == 'shipped':
                 Notification.objects.create(
                     user=order.user,
@@ -161,7 +161,6 @@ class OrderConfirmDeliveryAPIView(APIView):
             order.status = Order.Status.DELIVERED
             order.save()
             
-            # Create notification for owner
             from apps.accounts.models import User
             owners = User.objects.filter(role='owner')
             for owner in owners:
